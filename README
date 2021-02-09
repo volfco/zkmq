@@ -8,8 +8,8 @@
     note: this is still experimental and in development. don't assume anything will work or the api will remain the same
 
 
-    tasks are given a randomly generated ID and written into /dir/tasks/<task>. Once tree is written, insert message into
-    /dir/queue.
+    tasks are given a randomly generated ID and written into /dir/tasks/<task>. Once tree is written, insert message
+    into /dir/queue.
 
     a worker will try and read the next message from /dir/queue. once it has a task, it will try and make a lock in
     /dir/tasks/<task>/claim. once the lock is in place, starts processing the task.
@@ -30,6 +30,8 @@
 
       /tasks
         /<task>
+          /filters
+            /<filter_name> => filter value
           /state
             /inserted
             /claimed
@@ -40,5 +42,27 @@
           /current          Current Task
 
       /conf
+        /task_gc_lifetime
         /task_gc_interval
       /lock
+
+
+
+    design.
+
+
+    messages.
+    messages are stored in two parts. first, the message is assigned a uuid and written to /<dir>/tasks/<id>/data, and
+    then metadata & filters is written to /<dir>/tasks/<id>. once all the data is written, a message is inserted to
+    represent the pending task.
+
+    this structure allows for two things.
+    1. limited tracking of the task state, from inserted, to claimed, to finished.
+    2. tasks can be filtered based on consumer preferences.
+
+    the main drawback is that there needs to be some garbage collection to remove completed tasks. this is configured by
+    the value in /<dir>/conf/task_gc_lifetime. tasks older then this value will be deleted. the polling interval is
+    governed by /<dir>/conf/task_gc_interval. every producer will try and perform this garbage collection (unless
+    explicitly configured not to.
+
+    ( TTL could be used to replace this on clusters that have TTL enabled and configured )

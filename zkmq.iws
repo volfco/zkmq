@@ -7,7 +7,12 @@
     <cargoProject FILE="$PROJECT_DIR$/Cargo.toml" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="947ae48a-8ec2-4587-8849-1d1d7382c27a" name="Default Changelist" comment="" />
+    <list default="true" id="947ae48a-8ec2-4587-8849-1d1d7382c27a" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/README" beforeDir="false" afterPath="$PROJECT_DIR$/README" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/consumer.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/consumer.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/producer.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/producer.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/zkmq.iws" beforeDir="false" afterPath="$PROJECT_DIR$/zkmq.iws" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />

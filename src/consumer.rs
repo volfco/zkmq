@@ -1,8 +1,8 @@
 use std::sync::Arc;
-use zookeeper::{ZooKeeper, Watcher};
+use zookeeper::{ZooKeeper, Watcher, WatchedEventType, WatchedEvent};
 use anyhow::{Result, Context};
 use uuid::Uuid;
-use log::{debug, trace};
+use log::{debug, trace, warn};
 use std::sync::mpsc::{SyncSender, Receiver, sync_channel};
 use lru;
 
@@ -55,9 +55,9 @@ impl Filter {
             FilterValue::String(s) => {
                 let d = String::from_utf8(value).context("parsing filter field to string")?;
                 match &self.operator {
-                    FilterOperator::Equal => d == s,
-                    FilterOperator::GreaterThan => d > s,
-                    FilterOperator::LessThan => d < s,
+                    FilterOperator::Equal => &d == s,
+                    FilterOperator::GreaterThan => &d > s,
+                    FilterOperator::LessThan => &d < s,
                 }
             },
             // FilterValue::Boolean(b) => {
@@ -69,14 +69,14 @@ impl Filter {
             //     }
             // },
             FilterValue::Integer(i) => {
-                let d: i32 = i32::from(value).context("parsing filter field to i32")?;
+                let d: i32 = i32::from_ne_bytes(value.as_slice()).context("parsing filter field to i32")?;
                 match &self.operator {
                     FilterOperator::Equal => &d == i,
                     FilterOperator::GreaterThan => &d > i,
                     FilterOperator::LessThan => &d < i,
                 }
             },
-        })l
+        })
     }
 }
 
@@ -121,7 +121,7 @@ impl ZkMQConsumer {
         Ok(Self { zk, dir, id, acl , cache})
     }
 
-    fn claim(&self, key: String) -> Result<Vec<u8>> {
+    fn claim(&self, key: String) -> zookeeper::ZkResult<Vec<u8>> {
         let data = self.zk.get_data(&key, false)?;
         self.zk.delete(&key, None)?;
         Ok(data.0)
@@ -188,7 +188,7 @@ impl ZkMQConsumer {
         Ok(valid_children)
     }
 
-    pub fn consume(&self, constraints: Option<Filters>) -> Result<Vec<u8>> {
+    pub fn consume(&self, constraints: Option<Filters>) -> zookeeper::ZkResult<Vec<u8>> {
         let latch: (SyncSender<bool>, Receiver<bool>) = sync_channel(1);
         loop {
             let tx = latch.0.clone();
@@ -230,4 +230,10 @@ impl ZkMQConsumer {
         }
     }
 
+}
+
+fn handle_znode_change(chan: &SyncSender<bool>, ev: zookeeper::WatchedEvent) {
+    if let zookeeper::WatchedEventType::NodeChildrenChanged = ev.event_type {
+        let _ = chan.send(true);
+    }
 }
