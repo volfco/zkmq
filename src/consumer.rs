@@ -41,18 +41,7 @@ pub struct Filter {
     pub operator: FilterOperator
 }
 impl Filter {
-    pub fn check_match(&self, o: &mut ZkMQConsumer, task: &str) -> Result<bool> {
-        let path = format!("{}/task/{}", o.dir, task);
-        // loop up the key in the lru cache- because we might have seen it before
-        let value = match o.cache.get(&path) {
-            None => match o.zk.get_data(path.as_str(), false) {
-                Err(e) if e == zookeeper::ZkError::NoNode => return Ok(false),
-                Err(e) => return Err(e.into()),
-                Ok(claim) => claim.0
-            },
-            Some(val) => val.to_owned()
-        };
-
+    pub fn check_match(&self, value: Vec<u8>) -> Result<bool> {
         Ok(match &self.value {
             FilterValue::String(v) => {
                 let d = String::from_utf8(value).context("parsing filter field to string")?;
@@ -185,15 +174,18 @@ impl ZkMQConsumer {
             return Ok(children);
         }
         let mut valid_children = vec![];
+        let dir = ZkPath::new(&self.dir);
 
         // loop over each child
         for child in children {
+            let child_dir = dir.join("task").join(&child).join("filters");
 
             // TODO can we make this parallel? that might require support in the zookeeper library
             // TODO there should be a more logical way to do this
             let mut filter_results: Vec<bool> = vec![];
             for f in &filters.filters {
-                filter_results.push(f.check_match(self, &child)?);
+                let child_value = self.get_child(child_dir.join(&f.field)).context(format!("looking up the value of filter {} for task {}", &f.field, &child))?;
+                filter_results.push(f.check_match(child_value)?);
             }
             let mut valid = 0;
             for fr in &filter_results {
@@ -214,6 +206,7 @@ impl ZkMQConsumer {
         Ok(valid_children)
     }
 
+    /// Get the value of a ZNode, from either the LRU cache or Zookeeper (and cache it)
     fn get_child(&mut self, path: ZkPath) -> Result<Vec<u8>> {
         if let Some(data) = self.cache.get(&path.to_string()) {
             Ok(data.clone())
@@ -279,6 +272,7 @@ impl ZkMQConsumer {
                         Err(e) if e == zookeeper::ZkError::NoNode => continue,
                         Err(e) => Err(e.into()),
                         Ok(claim) => {
+                            // TODO We need to handle a transient failure here and either re-try, DLX the task, or something else
                             let inner = self.build_message(claim)?;
                             debug!("consumed message {} ({}). took {}ms", &inner.id, &child, start.elapsed().as_millis());
                             Ok(inner)
@@ -297,7 +291,6 @@ impl ZkMQConsumer {
             let _ = latch.1.recv().unwrap();
         }
     }
-
 }
 
 fn handle_znode_change(chan: &SyncSender<bool>, ev: zookeeper::WatchedEvent) {
