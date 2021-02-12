@@ -77,7 +77,7 @@ impl ZkMQProducer{
             let _ = self.create_znode(path.join("metadata"), message.meta.map_or(vec![], |i| serde_json::to_vec(&i).unwrap() ))?;
             // populate filters
             let filter_dir = path.join("filters");
-            for filter in message.filters {
+            for filter in message.tags {
                 let _ = self.create_znode(filter_dir.join(filter.0), filter.1)?;
             }
 

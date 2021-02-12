@@ -31,8 +31,10 @@ pub enum FilterOperator {
 
 #[derive(PartialEq)]
 pub enum FilterConditional {
+    /// All filters must pass before the message is consumed
     ALL,
-    ANY
+    /// Any of N filters must pass before the message is consumed
+    ANY(usize)
 }
 
 pub struct Filter {
@@ -192,10 +194,11 @@ impl ZkMQConsumer {
                 if *fr { valid += 1; }
             }
 
-            // if we're doing AND, and we have as many valid filters as filters- we can say this child matches
-            if (filters.conditional == FilterConditional::ALL && filter_results.len() == valid) ||
-               (filters.conditional == FilterConditional::ANY && !filter_results.is_empty() && valid > 0) {
-                valid_children.push(child);
+            match filters.conditional {
+                // if ALL filters must pass, check if the number of filters matches the number of true filters
+                FilterConditional::ALL => if filter_results.len() == valid { valid_children.push(child) },
+                // if ANY N filters must pass, check if the number of filter matches is >= then the number of matches required
+                FilterConditional::ANY(size) => if valid >= size { valid_children.push(child) }
             }
 
             // if we're over the given "limit" of results, break the loop
@@ -237,7 +240,7 @@ impl ZkMQConsumer {
 
         Ok(ZkMQMessage {
             id: id.clone(),
-            filters,
+            tags: filters,
             body: self.zk.get_data(&dir.join("metadata").to_string(), false).context("reading task body")?.0,
             meta: metadata
         })

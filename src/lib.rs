@@ -17,22 +17,22 @@ pub struct ZkMQMessageMetadata {
 #[derive(Debug)]
 pub struct ZkMQMessage {
     id: String,
-    filters: Vec<(String, Vec<u8>)>,
+    pub tags: Vec<(String, Vec<u8>)>,
     body: Vec<u8>,
     meta: Option<ZkMQMessageMetadata>,
 }
 impl ZkMQMessage {
-    fn new<B: Into<Vec<u8>>>(body: B) -> Self {
+    pub fn new<B: Into<Vec<u8>>>(body: B) -> Self {
         ZkMQMessage {
             id: uuid::Uuid::new_v4().to_string(),
-            filters: vec![],
+            tags: vec![],
             body: body.into(),
             meta: None
         }
     }
 
-    pub fn set_filter<S: ToString, B: Into<Vec<u8>>>(&mut self, key: S, value: B) {
-        self.filters.push((key.to_string(), value.into()))
+    pub fn set_tag<S: ToString, B: Into<Vec<u8>>>(&mut self, key: S, value: B) {
+        self.tags.push((key.to_string(), value.into()))
     }
 
 }
