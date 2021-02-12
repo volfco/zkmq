@@ -17,7 +17,12 @@
     a background thread will perform garbage collection at the interval configured in /dir/conf/task_gc_interval
 
 
+    task has filter performance_class=standard
+    node has filter performance_class=high_performance
+    filter config is OrderedEnum(performance_class)=("low", "standard", "performance", "high_performance")
 
+    if filter_method=absolute, a performance_class=standard node will be chosen
+    if filter_method=at_least, a performance_class=high_performance can be selected
 
 
     tree layout.
@@ -31,11 +36,10 @@
       /tasks
         /<task>
           /filters
-            /<filter_name> => filter value
-          /state
-            /inserted
-            /claimed
-          /data
+            /<filter_name>  => filter value
+          /state            => state enum
+          /metadata         => json encoded metadata
+          /data             => binary data
 
       /consumers            Active Consumers
         /<id>
@@ -66,3 +70,10 @@
     explicitly configured not to.
 
     ( TTL could be used to replace this on clusters that have TTL enabled and configured )
+
+
+    consumers.
+
+    the consumers also perform cordinated matience tasks, like cleanup and garbage collection. the reason this is done
+    on the consumer side, is that it is assumed that the consumers will always be alive longer then the producers. the
+    consumers will always be around to read messages, even if there isn't any being produced.
