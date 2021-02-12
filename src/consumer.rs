@@ -186,8 +186,11 @@ impl ZkMQConsumer {
             // TODO there should be a more logical way to do this
             let mut filter_results: Vec<bool> = vec![];
             for f in &filters.filters {
-                let child_value = self.get_child(child_dir.join(&f.field)).context(format!("looking up the value of filter {} for task {}", &f.field, &child))?;
-                filter_results.push(f.check_match(child_value)?);
+                let child_value = self.get_child(child_dir.join(&f.field)).context(format!("looking up the value of filter {} for task {}", &f.field, &child));
+                filter_results.push(match child_value {
+                    Ok(v) => f.check_match(v)?,
+                    Err(_) => false
+                });
             }
             let mut valid = 0;
             for fr in &filter_results {
@@ -227,7 +230,7 @@ impl ZkMQConsumer {
         trace!("building ZkMQMessage from {}", &dir);
 
         let metadata: Option<ZkMQMessageMetadata> = match self.zk.get_data(&dir.join("metadata").to_string(), false) {
-            Ok(d) => Some(serde_json::from_slice(&*d.0).context("reading task metadata")?),
+            Ok(d) => serde_json::from_slice(&*d.0).map(|v| { Some(v) }).unwrap_or_else(|_| { None }),
             _ => None
         };
 
@@ -241,12 +244,22 @@ impl ZkMQConsumer {
         Ok(ZkMQMessage {
             id: id.clone(),
             tags: filters,
-            body: self.zk.get_data(&dir.join("metadata").to_string(), false).context("reading task body")?.0,
+            body: self.get_child(dir.join("data"))?,
             meta: metadata
         })
 
     }
 
+    /// Consume messages from the Queue
+    ///
+    /// Optional Constraints can be provided as a Filters struct. Filters are basically a blacklist
+    /// on message tags. If a message is tagged with `scope`, and you start a consumer without any
+    /// filters, you will get all messages- tagged and untagged.
+    ///
+    /// If you add a filter on `scope`, messages not matching the filter will be ignored. Messages
+    /// missing the `scope` tag will be treated as if they fail to match the filter. So, if your
+    /// `FilterConditional` is ALL and the `scope` tag is missing, it will fail. If is ANY, then it
+    /// could still be valid.
     pub fn consume(&mut self, constraints: Option<Filters>) -> Result<ZkMQMessage> {
         let latch: (SyncSender<bool>, Receiver<bool>) = sync_channel(1);
         loop {
