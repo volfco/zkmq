@@ -1,11 +1,10 @@
 use std::sync::Arc;
-use zookeeper::{ZooKeeper, ZkResult, CreateMode, ZooKeeperExt};
+use zookeeper::{ZooKeeper, CreateMode, ZooKeeperExt};
 use anyhow::{Result, Context};
 use uuid::Uuid;
 use log::{debug, trace};
 use crate::{ZkMQMessage, ZkPath, ZkMQMessageMetadata};
 
-use std::convert;
 use chrono::Utc;
 use std::time::Instant;
 

@@ -103,9 +103,9 @@ pub struct Filters {
 pub struct ZkMQConsumer {
     zk: Arc<ZooKeeper>,
     dir: String,
-    id: String,
+    _id: String,
 
-    acl: Vec<zookeeper::Acl>,
+    _acl: Vec<zookeeper::Acl>,
     cache: lru::LruCache<String, Vec<u8>>
 }
 
@@ -133,7 +133,7 @@ impl ZkMQConsumer {
 
         let cache = lru::LruCache::new(1024);
 
-        Ok(Self { zk, dir: dir.to_string(), id, acl , cache})
+        Ok(Self { zk, dir: dir.to_string(), _id: id, _acl: acl , cache})
     }
 
     fn claim(&self, key: String) -> zookeeper::ZkResult<Vec<u8>> {

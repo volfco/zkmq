@@ -1,9 +1,6 @@
 use std::fmt;
 use serde::{Deserialize, Serialize};
 use chrono::prelude::{DateTime, Utc};
-use zookeeper::ZooKeeper;
-use std::sync::Arc;
-use anyhow::{Result, Context};
 
 pub mod consumer;
 pub mod producer;
