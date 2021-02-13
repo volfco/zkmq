@@ -4,7 +4,13 @@ version = "0.1.0"
 authors = ["Colum <colum.mcgaley@fastmail.com>"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "zkmq"
+path = "src/lib.rs"
+
+[[bin]]
+name = "zkmq_housekeeper"
+path = "bin/housekeeper.rs"
 
 [dependencies]
 zookeeper = "0.5"

@@ -1,0 +1,16 @@
+- Implement a housekeeping module that performs garbage collection in either the housekeeper binary or on the client.
+  - clients should be able to run it in the background
+- Track state for each task. Something like:
+  enum TaskState {
+    PENDING,    // task has been inserted into the queue
+    CONSUMED,   // task has been consumed by the consumer
+    RUNNING,    // consumer has indicated that progress has started on the task
+    PROGRESS(%),// consumer can possibly report progress through the task?
+    SUCCESS,    // task has completed
+    FAILURE,    // task has failed
+    LOST        // task has has been lost
+  }
+  state should be set to success on ZkMQMessage drop and maybe have a method to set state explicitly?
+
+- consumer registration to the queue's members znode (/dir/consumers/<id>) and publish task information and stats
+- consumer registration to the queue's members znode (/dir/producers/<id>) and publish stats?
