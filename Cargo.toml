@@ -1,8 +1,16 @@
 [package]
 name = "zkmq"
-version = "0.1.0"
-authors = ["Colum <colum.mcgaley@fastmail.com>"]
+description = "A Zookeeper based Message Queue"
+version = "0.1.3"
+authors = ["Colum McGaley <git@volf.co>"]
 edition = "2018"
+license = "Apache-2.0"
+keywords = ["zookeeper", "message-queue"]
+categories = ["concurrency"]
+homepage = "https://rust.volf.co/zkmq"
+repository = "https://github.com/volfco/zkmq"
+readme = "README"
+
 
 [lib]
 name = "zkmq"
