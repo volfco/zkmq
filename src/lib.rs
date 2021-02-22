@@ -34,6 +34,7 @@ impl ZkMQMessage {
 
 }
 
+#[derive(Clone, Debug)]
 pub struct ZkPath {
     parts: Vec<String>
 }
