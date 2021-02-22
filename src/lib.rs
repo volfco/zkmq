@@ -39,10 +39,10 @@ pub struct ZkPath {
     parts: Vec<String>
 }
 impl ZkPath {
-    fn new<R: ToString>(base: R) -> Self {
+    pub fn new<R: ToString>(base: R) -> Self {
         Self { parts: base.to_string().split('/').map(|s| s.to_string()).collect() }
     }
-    fn join<D: ToString>(&self, dir: D) -> Self {
+    pub fn join<D: ToString>(&self, dir: D) -> Self {
         let mut parts = self.parts.clone();
         parts.push(dir.to_string());
         ZkPath {
@@ -53,6 +53,11 @@ impl ZkPath {
 impl fmt::Display for ZkPath {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.parts.join("/"))
+    }
+}
+impl Into<String> for ZkPath {
+    fn into(self) -> String {
+        self.parts.join("/")
     }
 }
 
