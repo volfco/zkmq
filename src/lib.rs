@@ -15,8 +15,8 @@ pub struct ZkMQMessageMetadata {
 pub struct ZkMQMessage {
     id: String,
     pub tags: Vec<(String, Vec<u8>)>,
-    body: Vec<u8>,
-    meta: Option<ZkMQMessageMetadata>,
+    pub body: Vec<u8>,
+    pub meta: Option<ZkMQMessageMetadata>,
 }
 impl ZkMQMessage {
     pub fn new<B: Into<Vec<u8>>>(body: B) -> Self {
