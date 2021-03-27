@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use zookeeper::{ZooKeeper};
 use anyhow::{Result, Context};
 use uuid::Uuid;
@@ -100,13 +100,14 @@ pub struct Filters {
     pub filters: Vec<Filter>
 }
 
+#[derive(Clone)]
 pub struct ZkMQConsumer {
     zk: Arc<ZooKeeper>,
     dir: String,
     _id: String,
 
     _acl: Vec<zookeeper::Acl>,
-    cache: lru::LruCache<String, Vec<u8>>
+    cache: Arc<Mutex<lru::LruCache<String, Vec<u8>>>>
 }
 
 impl ZkMQConsumer {
@@ -133,7 +134,7 @@ impl ZkMQConsumer {
 
         let cache = lru::LruCache::new(1024);
 
-        Ok(Self { zk, dir: dir.to_string(), _id: id, _acl: acl , cache})
+        Ok(Self { zk, dir: dir.to_string(), _id: id, _acl: acl , cache: Arc::new(Mutex::new(cache))})
     }
 
     fn claim(&self, key: String) -> zookeeper::ZkResult<Vec<u8>> {
@@ -214,12 +215,12 @@ impl ZkMQConsumer {
 
     /// Get the value of a ZNode, from either the LRU cache or Zookeeper (and cache it)
     fn get_child(&mut self, path: ZkPath) -> Result<Vec<u8>> {
-        if let Some(data) = self.cache.get(&path.to_string()) {
+        if let Some(data) = self.cache.lock().unwrap().get(&path.to_string()) {
             Ok(data.clone())
         } else {
             // we don't have the key in the cache, so get it, put it in the cache, and return it
             let rq = self.zk.get_data(&path.to_string(), false).context(format!("looking up {}", &path))?.0;
-            let _ = self.cache.put(path.to_string(), rq.clone());
+            let _ = self.cache.lock().unwrap().put(path.to_string(), rq.clone());
             Ok(rq)
         }
     }
