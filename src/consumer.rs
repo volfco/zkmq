@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 use zookeeper::{ZooKeeper};
 use anyhow::{Result, Context};
 use uuid::Uuid;
-use log::{debug, trace, warn};
+use log::{debug, trace, warn, error};
 use std::sync::mpsc::{SyncSender, Receiver, sync_channel};
 use crate::producer::ZK_DISTRIBUTEDQUEUE_PREFIX;
 use crate::{ZkMQMessage, ZkPath, ZkMQMessageMetadata};
@@ -172,8 +172,9 @@ impl ZkMQConsumer {
     /// FilterConditional::ALL, all filters need to match. If FilterConditional::ANY, only a single
     /// filter needs to match
     fn filter_children(&mut self, children: Vec<String>, filters: &Filters, limit: usize) -> Result<Vec<String>> {
+        trace!("filter_children got {} children and {} filters", children.len(), filters.filters.len());
         if children.is_empty() || filters.filters.is_empty() {
-            trace!("filter_children was given 0 children or 0 filters, nothing to do");
+            debug!("filter_children was given 0 children or 0 filters, nothing to do");
             return Ok(children);
         }
         let mut valid_children = vec![];
@@ -215,12 +216,15 @@ impl ZkMQConsumer {
 
     /// Get the value of a ZNode, from either the LRU cache or Zookeeper (and cache it)
     fn get_child(&mut self, path: ZkPath) -> Result<Vec<u8>> {
-        if let Some(data) = self.cache.lock().unwrap().get(&path.to_string()) {
+        let mut handle = self.cache.lock().unwrap();
+        if let Some(data) = handle.get(&path.to_string()) {
+            trace!("key {} was a cache hit", &path);
             Ok(data.clone())
         } else {
             // we don't have the key in the cache, so get it, put it in the cache, and return it
             let rq = self.zk.get_data(&path.to_string(), false).context(format!("looking up {}", &path))?.0;
-            let _ = self.cache.lock().unwrap().put(path.to_string(), rq.clone());
+            let _ = handle.put(path.to_string(), rq.clone());
+            trace!("key {} was a cache miss", &path);
             Ok(rq)
         }
     }
@@ -242,12 +246,24 @@ impl ZkMQConsumer {
             filters.push((child.clone(), self.get_child(dir.join("filters").join(child))?))
         }
 
-        Ok(ZkMQMessage {
+        let body = self.get_child(dir.join("data"));
+        if body.is_err() {
+            let error = body.err().unwrap();
+            error!("unable to build message body. got error {:?}", &error);
+            return Err(error);
+        }
+
+        let message = ZkMQMessage {
             id: id.clone(),
             tags: filters,
-            body: self.get_child(dir.join("data"))?,
+            body: body.unwrap(),
             meta: metadata
-        })
+        };
+
+        trace!("successfully built message {}", &dir);
+        trace!("{:?}", &message);
+
+        Ok(message)
 
     }
 
@@ -269,6 +285,8 @@ impl ZkMQConsumer {
             let op = self.ordered_children(Some(move |ev| {
                 handle_znode_change(&tx, ev)
             }))?;
+
+            debug!("got {} messages during consumption loop", &op.len());
 
             let children = match constraints {
                 Some(ref inner) => self.filter_children(op, inner, ZKMQ_CONSUMER_CONSUMPTION_LIMIT)?,
