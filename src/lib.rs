@@ -1,4 +1,3 @@
-
 use chrono::prelude::Utc;
 use anyhow::{Result, Context};
 use std::time::Instant;
@@ -6,6 +5,8 @@ use zookeeper::{ZkResult, ZooKeeper, CreateMode, ZooKeeperExt};
 use std::sync::{Arc, Mutex};
 use log::{debug, warn, trace, error};
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
+use derivative::Derivative;
+
 
 pub mod filter;
 pub use filter::*;
@@ -14,11 +15,14 @@ pub use message::*;
 pub mod path;
 pub use path::*;
 
+
 const ZKMQ_CONSUMER_CONSUMPTION_LIMIT: usize = 12;
 
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Derivative)]
+#[derivative(Debug)]
 pub struct ZkMQBuilder {
+    #[derivative(Debug="ignore")]
     zk: Arc<ZooKeeper>,
     id: Option<String>,
     consumer_started: bool,
@@ -28,7 +32,6 @@ pub struct ZkMQBuilder {
     message_prefix: String,
 }
 impl ZkMQBuilder {
-
     pub fn new(zk: Arc<ZooKeeper>) -> Self {
         Self {
             zk,
