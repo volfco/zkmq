@@ -27,19 +27,22 @@ fn main() -> anyhow::Result<()> {
 
     let zk = zookeeper::ZooKeeper::connect(&*zk_urls, Duration::from_millis(2500), NoopWatcher).unwrap();
 
-    let mut consumer = zkmq::consumer::ZkMQConsumer::new(Arc::new(zk), "/testing", None).unwrap();
-    
-    let filters = zkmq::consumer::Filters {
-        conditional: zkmq::consumer::FilterConditional::ALL,
-        filters: vec![zkmq::consumer::Filter{
+    let mut zkmq = zkmq::ZkMQBuilder::new(Arc::new(zk))
+        .consumer(true)
+        .producer(false)
+        .build()?;
+
+    let filters = zkmq::Filters {
+        conditional: zkmq::FilterConditional::All,
+        filters: vec![zkmq::Filter{
             field: "filtered".to_string(),
-            value: zkmq::consumer::FilterValue::Integer(1),
-            operator: zkmq::consumer::FilterOperator::Eq
+            value: zkmq::FilterValue::Integer(1),
+            operator: zkmq::FilterOperator::Eq
         }]
     };
-    
-    let message = consumer.consume(Some(filters))?;
-    println!("{:?}", message);
+
+    let r = zkmq.consume(Some(filters))?;
+    println!("{:?}", r);
 
     Ok(())
 }

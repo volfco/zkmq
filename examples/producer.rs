@@ -27,8 +27,12 @@ fn main() -> anyhow::Result<()> {
 
     let zk = zookeeper::ZooKeeper::connect(&*zk_urls, Duration::from_millis(2500), NoopWatcher).unwrap();
 
-    let producer = zkmq::producer::ZkMQProducer::new(Arc::new(zk), "/testing", None).unwrap();
-    let r = producer.produce("hello world".to_string())?;
+    let zkmq = zkmq::ZkMQBuilder::new(Arc::new(zk))
+        .consumer(false)
+        .producer(true)
+        .build()?;
+
+    let r = zkmq.produce("hello world".to_string())?;
     println!("{:?}", r);
 
     Ok(())

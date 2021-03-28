@@ -27,9 +27,13 @@ fn main() -> anyhow::Result<()> {
 
     let zk = zookeeper::ZooKeeper::connect(&*zk_urls, Duration::from_millis(2500), NoopWatcher).unwrap();
 
-    let mut consumer = zkmq::consumer::ZkMQConsumer::new(Arc::new(zk), "/testing", None).unwrap();
-    let message = consumer.consume(None)?;
-    println!("{:?}", message);
+    let mut zkmq = zkmq::ZkMQBuilder::new(Arc::new(zk))
+        .consumer(true)
+        .producer(false)
+        .build()?;
+
+    let r = zkmq.consume(None)?;
+    println!("{:?}", r);
 
     Ok(())
 }

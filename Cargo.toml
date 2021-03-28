@@ -1,7 +1,7 @@
 [package]
 name = "zkmq"
 description = "A Zookeeper based Message Queue"
-version = "0.1.8"
+version = "0.2.0"
 authors = ["Colum McGaley <rust-lang@m1.volf.co>"]
 edition = "2018"
 license = "Apache-2.0"
@@ -9,7 +9,7 @@ keywords = ["zookeeper", "message-queue"]
 categories = ["concurrency"]
 homepage = "https://rust.volf.co/zkmq"
 repository = "https://github.com/volfco/zkmq"
-readme = "README"
+readme = "README.md"
 
 
 [lib]
