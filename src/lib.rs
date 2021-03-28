@@ -17,8 +17,7 @@ pub use path::*;
 const ZKMQ_CONSUMER_CONSUMPTION_LIMIT: usize = 12;
 
 
-
-
+#[derive(Clone, Debug)]
 pub struct ZkMQBuilder {
     zk: Arc<ZooKeeper>,
     id: Option<String>,
@@ -118,6 +117,7 @@ impl ZkMQBuilder {
     }
 }
 
+#[derive(Clone, Debug)]
 pub struct ZkMQ {
     config: ZkMQBuilder,
     id: String,
