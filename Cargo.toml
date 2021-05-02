@@ -1,7 +1,7 @@
 [package]
 name = "zkmq"
 description = "A Zookeeper based Message Queue"
-version = "0.2.2"
+version = "0.2.3"
 authors = ["Colum McGaley <rust-lang@m1.volf.co>"]
 edition = "2018"
 license = "Apache-2.0"
@@ -21,7 +21,7 @@ name = "zkmq_housekeeper"
 path = "bin/housekeeper.rs"
 
 [dependencies]
-zookeeper = "0.5"
+zookeeper = "0.6"
 uuid = { version = "0.8", features = ["v4"]}
 log = "0.4"
 anyhow = "1.0"

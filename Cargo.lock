@@ -489,7 +489,7 @@ dependencies = [
 
 [[package]]
 name = "zkmq"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "anyhow",
  "chrono",
@@ -505,9 +505,9 @@ dependencies = [
 
 [[package]]
 name = "zookeeper"
-version = "0.5.10"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "98ef3c862b1475a45843c2e5a3f16b1953742ad1be51709fcbc5c6321c3381d2"
+checksum = "3b6375cc666ebaa54bf55b37829762e3800684833afaf590f206728d64cfe7f0"
 dependencies = [
  "byteorder",
  "bytes",
